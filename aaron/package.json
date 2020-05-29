@@ -3,8 +3,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "4.16.3",
-    "discord.js": "^12.2.0",
-    "axios": "^0.19.2"
+    "axios": "^0.18.0",
+    "discord.js": "^11.6.4",
+    "dotenv": "^8.2.0",
+    "express": "4.16.3"
   }
 }
