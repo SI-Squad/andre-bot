@@ -1,5 +1,5 @@
-// const dotenv = require('dotenv');
-// dotenv.config();
+const dotenv = require('dotenv');
+dotenv.config();
 
 const Discord = require('discord.js')
 const config = require('./config')
