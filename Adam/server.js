@@ -1,4 +1,5 @@
 const Discord = require('discord.js')
+var PORT=process.env.PORT
 const client = new Discord.Client()
 client.on('message', msg => {
   if (msg.content === 'ping') {
