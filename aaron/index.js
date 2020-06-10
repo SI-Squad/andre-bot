@@ -65,13 +65,13 @@ discordClient.on('presenceUpdate', async (oldPresence, newPresence) => {
       languageCode: 'en-US'
     }
 
-    console.log("\n 1 \n")                                                        // 1
+    // console.log("\n 1 \n")                                                        // 1
 
     const request = {
       config: requestConfig
     }
 
-    console.log("\n 2 \n")                                                        // 2
+    // console.log("\n 2 \n")                                                        // 2
 
     const recognizeStream = googleSpeechClient
       .streamingRecognize(request)
@@ -84,7 +84,7 @@ discordClient.on('presenceUpdate', async (oldPresence, newPresence) => {
         console.log(`Transcription: ${transcription}`)
       })
 
-    console.log("\n 3 \n")                                                        // 3
+    // console.log("\n 3 \n")                                                        // 3
 
       /*********** */
 
@@ -115,11 +115,11 @@ discordClient.on('presenceUpdate', async (oldPresence, newPresence) => {
 
     const convertTo1ChannelStream = new ConvertTo1ChannelStream()
 
-    console.log("\n 4 \n")                                                        // 4
+    // console.log("\n 4 \n")                                                        // 4
 
     audioStream.pipe(convertTo1ChannelStream).pipe(recognizeStream)
 
-    console.log("\n 5 \n")                                                        // 5
+    // console.log("\n 5 \n")                                                        // 5
 
     audioStream.on('end', async () => {
       console.log('audioStream end')

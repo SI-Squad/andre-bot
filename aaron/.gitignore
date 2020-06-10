@@ -1,0 +1,4 @@
+*.env
+*config.json
+*google-credentials.json
+*package-lock.json
