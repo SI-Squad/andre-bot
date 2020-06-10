@@ -2,5 +2,5 @@
 *config.json
 *google-credentials.json
 *package-lock.json
-*DS_Store
+*.DS_Store
 *node_modules
