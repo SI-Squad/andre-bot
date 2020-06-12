@@ -6,8 +6,7 @@ client.on('message', msg => {
     msg.reply('pong')
   }
 })
-console.log(process.env.BOT_TOKEN)
-client.login(process.env.BOT_TOKEN)
+client.login(process.env.DATABASE_URL)
 const axios = require('axios')
 //...
 client.on('message', msg => {
