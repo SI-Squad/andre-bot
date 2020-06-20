@@ -1,32 +1,30 @@
 const dotenv = require('dotenv');
 dotenv.config();
-
 const Discord = require('discord.js')
 const config = require('./config')
-
 const discordClient = new Discord.Client()
-
 discordClient.on('ready', () => {
   console.log(`Logged in as ${discordClient.user.tag}!`)
 })
-
 discordClient.login(config.discordApiToken)
-
 const googleSpeech = require('@google-cloud/speech')
-
 const googleSpeechClient = new googleSpeech.SpeechClient()
 
 // The channel the bot transcribes to 
+// var List = require("collections/list");
 var transChannel
 
 
 
 discordClient.on('message', async msg => {
-
   if (msg.content === 'inHere') {
     const memberVoiceChannel = msg.member.voice.channel
     if (memberVoiceChannel == null) {
       msg.reply("you need to be in a voice channel for me to help you!")
+      return
+    }
+    if(transChannel == null){
+      msg.reply("you need to type 'transcribeHere' in a text channel before I can start transcribing your message.")
       return
     }
 
@@ -58,14 +56,9 @@ discordClient.on('message', async msg => {
             .join('\n')
             .toLowerCase()
           console.log(`Transcription: ${transcription}`)
-          
           // transChannel.send(`${user.username}: ${transcription}`)
           console.log(transChannel.id)
           transChannel.send(`${user.username}: ${transcription}`)
-
-
-
-
         })
         const { Transform } = require('stream')
   
@@ -93,15 +86,7 @@ discordClient.on('message', async msg => {
         console.log('audioStream end')
       })
     })
-  }
-
-
-
-
-
-
-
-  else if(msg.content === 'transcribeHere'){
+  }else if(msg.content === 'transcribeHere'){
     const memberTextChannel = msg.channel
     if (memberTextChannel == null) {
       msg.reply("I can only transcribe your speech into a text channel!")
