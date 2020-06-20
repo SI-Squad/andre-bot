@@ -1,14 +1,26 @@
+// You're going to need to do the following things
+// npm install node
+// npm install discord.js
+// npm i @discordjs/opus
+
+
 const dotenv = require('dotenv');
 dotenv.config();
 const Discord = require('discord.js')
 const config = require('./config')
 const discordClient = new Discord.Client()
+
+console.log("\n\n\n 1 \n\n\n")
+
 discordClient.on('ready', () => {
   console.log(`Logged in as ${discordClient.user.tag}!`)
 })
 discordClient.login(config.discordApiToken)
 const googleSpeech = require('@google-cloud/speech')
 const googleSpeechClient = new googleSpeech.SpeechClient()
+
+console.log("\n\n\n 2 \n\n\n")
+
 
 // The channel the bot transcribes to 
 // var List = require("collections/list");
@@ -28,10 +40,16 @@ discordClient.on('message', async msg => {
       return
     }
 
+    console.log("\n\n\n 3 \n\n\n")
+
+
     msg.reply('I\'m omw')
 
     const connection = await memberVoiceChannel.join()
     const receiver = connection.receiver
+
+    console.log("\n\n\n 4 \n\n\n")
+
 
     connection.on('speaking', (user, speaking) => {
       if (!speaking) {
@@ -44,6 +62,10 @@ discordClient.on('message', async msg => {
         sampleRateHertz: 48000,
         languageCode: 'en-US'
       }
+
+      console.log("\n\n\n 5 \n\n\n")
+
+
       const request = {
         config: requestConfig
       }
@@ -56,12 +78,15 @@ discordClient.on('message', async msg => {
             .join('\n')
             .toLowerCase()
           console.log(`Transcription: ${transcription}`)
-          // transChannel.send(`${user.username}: ${transcription}`)
           console.log(transChannel.id)
           transChannel.send(`${user.username}: ${transcription}`)
         })
         const { Transform } = require('stream')
   
+
+        console.log("\n\n\n 6 \n\n\n")
+
+
         function convertBufferTo1Channel(buffer) {
           const convertedBuffer = Buffer.alloc(buffer.length / 2)
           for (let i = 0; i < convertedBuffer.length / 2; i++) {
@@ -71,6 +96,10 @@ discordClient.on('message', async msg => {
           return convertedBuffer
         }
   
+
+        console.log("\n\n\n 7 \n\n\n")
+
+
         class ConvertTo1ChannelStream extends Transform {
           constructor(source, options) {
             super(options)
