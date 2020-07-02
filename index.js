@@ -199,13 +199,40 @@ discordClient.on('message', async msg => {
 
     case 'display':
 
-		const displayEmbed = new Discord.MessageEmbed()
-			.setColor('#92DCE5')
-			.setTitle('Andre is transcribing for...')
-			.addField('Channels', transChannelListDisplay.toArray() , false)
-			.addField('Users via DM', transDMListDisplay.toArray() , false)
+		if(transChannelListDisplay.toArray() == '' && transDMList.toArray() == ''){
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', 'No channels have been added' , false)
+				.addField('Users via DM', 'No users have been added' , false)
 
-		msg.channel.send(displayEmbed)
+			msg.channel.send(displayEmbed)
+		}else if(transChannelListDisplay.toArray() == ''){
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', 'No channels have been added' , false)
+				.addField('Users via DM', transDMListDisplay.toArray() , false)
+
+			msg.channel.send(displayEmbed)
+		}
+		if(transDMList.toArray() == ''){
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', transChannelListDisplay.toArray() , false)
+				.addField('Users via DM', 'No users have been added' , false)
+
+			msg.channel.send(displayEmbed)
+		}else{
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', transChannelListDisplay.toArray() , false)
+				.addField('Users via DM', transDMListDisplay.toArray() , false)
+
+			msg.channel.send(displayEmbed)
+		}
 
 
 		break;
@@ -336,6 +363,7 @@ ID_ERROR_ROLE = "Is a role on the server and not a member or text channel, or so
  * and members lists
  */
 function identifyMention(fullId, guildAccess){
+
 
 	if( fullId.length >= 4 ){
 		if( fullId.substring(0,1) == ('<') && fullId.substring(fullId.length - 1, fullId.length) == ('>') ){
