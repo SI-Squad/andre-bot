@@ -103,69 +103,41 @@ discordClient.on('message', async msg => {
 		break;
 
     case 'remove':
+		console.log(args[1])
 
-		// number of arguments provided is only 2
 		if(args.length == 2){
-			// checks to make sure the ID is greater than four. might not be necessary
-			if(args[1].length >= 4){
-				// makes sure the id starts with "<" and ends with ">"
-				if(args[1].substring(0,1) == "<" && args[1].substring(args[1].length-1, args[1].length) == ">"){
-					// checks to see if it is a channel id
-					if(args[1].substring(1,2) == "#"){
-						channelID = args[1].substring(2, args[1].length-1)
-						// looks throught the channel list to see if the channel exists...
-						if(discordClient.channels.get(channelID) != null){
-							// ...and that it is a text channel
-							if(discordClient.channels.get(channelID).type == "text"){
-								// checks to see if the id is already in the list, it should be in order to remove
-								if(transChannelList.has(channelID)){
-									// Here is where we remove from the transChannelList
-									msg.channel.send( args[1] + " has been removed from the list of channels receiving the transcription.")
-									transChannelList.delete(channelID)
-									transChannelListDisplay.delete(args[1])
-									console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
-
-								}else{
-									msg.reply(ADD_ERROR_3)
-								}
-							}else{
-								msg.reply(ADD_ERROR_2)
-							}
-						}else{
-							msg.reply(ADD_ERROR_1)
-						}
-					// checks to see if the id is a user mention (and not a category or something else)
-					}else if(args[1].substring(1,2) == "@" && args[1].substring(2,3) == "!"){
-						userID = args[1].substring(3, args[1].length-1)
-						// checks to see if the user exists
-						if(discordClient.users.fetch(userID) != null){
-							// checks to see if the list already contains the user, it should be in order to remove, and that the user being added to the list is the user calling the function
-							if(transDMList.has(userID) && msg.member.id == userID){
-								// Here is where we add to the transDMList
-								msg.channel.send( args[1] + " has been removed from the list of users receiving the transcription via DMs.")
-								transDMList.delete(userID)
-								transDMListDisplay.delete(args[1])
-								console.log("\nDM List\n" + transDMList.toArray() + "\n\n")
-
-							}else{
-								msg.reply(ADD_ERROR_3)
-							}
-						}else{
-							msg.reply(ADD_ERROR_1)
+			switch(identifyMention(args[1], msg)){
+				case 'Confirmed text channel':
+					channelID = parseID(args[1])
+					if(transChannelList.has(channelID)){
+						msg.channel.send( args[1] + " has been removed from the list of channels receiving the transcription.")
+						transChannelList.delete(channelID)
+						transChannelListDisplay.delete(args[1])
+						console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
+					}else{
+						// Not on transChannelList
+						msg.reply(REMOVE_ERROR_3)
+					}
+					break;
+				case 'Confirmed nick name':
+				case 'Confirmed member name':
+					userID = parseID(args[1])
+					if(msg.member.id == userID){
+						if(transDMList.has(userID)){
+							msg.channel.send( args[1] + " has been removed from the list of users receiving the transcription via DMs.")
+							transDMList.delete(userID)
+							transDMListDisplay.delete(args[1])
+							console.log("\nDM List\n" + transDMList.toArray() + "\n\n")
 						}
 					}else{
-						msg.reply(ADD_ERROR_1)
+						// User mentioned is not the same as the user mentioning
+						msg.reply(REMOVE_ERROR_4)
 					}
-				}else{
-					msg.reply(ADD_ERROR_1)
-				}
-			}else{
-				msg.reply(ADD_ERROR_1)
+					break;
+				default:
+					msg.reply(identifyMention(args[1], msg))
 			}
-		}else{
-			msg.reply(ADD_ERROR_1)
 		}
-		
 		break;
 
     case 'display':
@@ -186,8 +158,7 @@ discordClient.on('message', async msg => {
 				.addField('Users via DM', transDMListDisplay.toArray() , false)
 
 			msg.channel.send(displayEmbed)
-		}
-		if(transDMList.toArray() == ''){
+		}else if(transDMList.toArray() == ''){
 			const displayEmbed = new Discord.MessageEmbed()
 				.setColor('#92DCE5')
 				.setTitle('Andre is transcribing for...')
