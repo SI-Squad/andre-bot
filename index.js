@@ -128,7 +128,28 @@ discordClient.on('message', async msg => {
 		}else{
 			msg.reply(ADD_ERROR_1)
 		}
-
+		// if(args.length == 2){
+		// 	switch(identify(args[1], msg)){
+		// 		case CONFIRMED_TEXT_CHANNEL:
+		// 			if(!transChannelList.has(channelID)){
+		// 				// Here is where we add to the transChannelList
+		// 				msg.channel.send( args[1] + " is now on the list of channels receiving the transcription.")
+		// 				transChannelList.unshift(channelID)
+		// 				transChannelListDisplay.unshift(args[1])
+		// 				console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
+		// 			}else{
+		// 				// Already on transChannelList
+		// 				msg.reply(ADD_ERROR_3)
+		// 			}
+		// 			break;
+		// 		case CONFIRMED_NICK_NAME:
+		// 			break;
+		// 		case CONFIRMED_MEMBER_NAME:
+		// 			break;
+		// 		default:
+		// 			msg.reply(identify(args[1], msg))
+		// 	}
+		// }
 		break;
 
     case 'remove':
@@ -241,9 +262,16 @@ discordClient.on('message', async msg => {
 		msg.reply("This command has not been set up yet! Take it up with that stupid Aaron guy!")
 		break;
 		
+	// to be removed, used for testing
 	case 'identify':
 		console.log( args[1] )
 		console.log( identifyMention(args[1], msg) )
+		break;
+
+	// to be removed, used for testing
+	case 'parse':
+		console.log(args[1])
+		console.log(parseID(args[1]))
 		break;
 	}
 
@@ -364,7 +392,6 @@ ID_ERROR_ROLE = "Is a role on the server and not a member or text channel, or so
  */
 function identifyMention(fullId, guildAccess){
 
-
 	if( fullId.length >= 4 ){
 		if( fullId.substring(0,1) == ('<') && fullId.substring(fullId.length - 1, fullId.length) == ('>') ){
 			if( fullId.substring(1,2) == ('#') ){
@@ -413,6 +440,24 @@ function identifyMention(fullId, guildAccess){
 	}else{
 		// It is not in proper ID format
 		return ID_ERROR_1
+	}
+
+}
+
+function parseID(fullId){
+
+	// Known text channel
+	if( fullId.substring(1,2) == ('#') ){
+		channelID = fullId.substring(2, fullId.length-1)
+		return channelID
+	}else if( fullId.substring(1,2) == ('@') ){
+		if( fullId.substring(2,3) == ('!') ){
+			userID = fullId.substring(3, fullId.length-1)
+			return userID
+		}else{
+			userID = fullId.substring(2, fullId.length-1)
+			return userID
+		}
 	}
 
 }
