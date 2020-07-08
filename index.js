@@ -5,7 +5,7 @@
 // also going to need this "npm install --save collections"
 
 var ConvertTo1ChannelStream = require("./stream_util.js");
-console.log(ConvertTo1ChannelStream)
+var {identifyMention, parseID} = require("./mention_util.js");
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -48,7 +48,6 @@ const helpEmbed = new Discord.MessageEmbed()
 	.addField('&listen', 'Calls Andre to the voice channel you are currently in.', false)
 
 
-	
 
 
 discordClient.on('message', async msg => {
@@ -180,7 +179,21 @@ discordClient.on('message', async msg => {
 		break;
 		
 	case 'listen':
-		msg.reply("This command has not been set up yet! Take it up with that stupid Aaron guy!")
+		// msg.reply("This command has not been set up yet! Take it up with that stupid Aaron guy!")
+
+		const memberVoiceChannel = msg.member.voice.channel
+		
+		if (!msg.member.voice.channel.joinable) {
+			console.log(msg.member.voice.channel)
+			msg.reply("<#" + memberVoiceChannel +">")
+			console.log("<#" + memberVoiceChannel +">")
+			console.log(memberVoiceChannel +"\n\n")
+			console.log("yo andre can't join that")
+			return
+		}
+		const connection = await memberVoiceChannel.join()
+
+
 		break;
 		
 	// to be removed, used for testing
@@ -197,194 +210,91 @@ discordClient.on('message', async msg => {
 	}
 
 
-  if (msg.content === 'inHere') {
-    const memberVoiceChannel = msg.member.voice.channel
-    if (memberVoiceChannel == null) {
-      msg.reply("you need to be in a voice channel for me to help you!")
-      return
-    }
-    if(transChannel == null){
-      msg.reply("you need to type 'transcribeHere' in a text channel before I can start transcribing your message.")
-      return
-    }
+	if (msg.content === 'inHere') {
+		const memberVoiceChannel = msg.member.voice.channel
+		// console.log(memberVoiceChannel)
 
-    msg.reply('I\'m omw')
+		if (memberVoiceChannel == null) {
+			msg.reply("you need to be in a voice channel for me to help you!")
+			return
+		}
+		if(transChannel == null){
+			msg.reply("you need to type 'transcribeHere' in a text channel before I can start transcribing your message.")
+			return
+		}
 
-    // console.log("\n\n\n 2 \n\n\n")
+		msg.reply('I\'m omw')
 
-
-    const connection = await memberVoiceChannel.join()
-    const receiver = connection.receiver
-
-    connection.on('speaking', (user, speaking) => {
-      if (!speaking) {
-        return
-      }
-
-      // console.log("\n\n\n 3 \n\n\n")
+		// console.log("\n\n\n 2 \n\n\n")
 
 
-      console.log(`I'm listening to ${user.username}`)
-      const audioStream = receiver.createStream(user, { mode: 'pcm' })
-      const requestConfig = {
-        encoding: 'LINEAR16',
-        sampleRateHertz: 48000,
-        languageCode: 'en-US'
-      }
+		const connection = await memberVoiceChannel.join()
+		const receiver = connection.receiver
 
-      // console.log("\n\n\n 4 \n\n\n")
+		connection.on('speaking', (user, speaking) => {
 
+			if (!speaking) {
+			return
+			}
 
-      const request = {
-        config: requestConfig
-      }
-      const recognizeStream = googleSpeechClient
-        .streamingRecognize(request)
-        .on('error', console.error)
-        .on('data', response => {
-          // console.log("\n\n\n reeeeeee \n\n\n")
-
-          const transcription = response.results
-            .map(result => result.alternatives[0].transcript)
-            .join('\n')
-            .toLowerCase()
-          console.log(`Transcription: ${transcription}`)
-          console.log(transChannel.id)
-
-		
-          transChannel.send(`${user.username}: ${transcription}`)
-          dmList.send(`${user.username}: ${transcription}`)
+			console.log("\n\n\n 3 \n\n\n")
 
 
-        })
+			console.log(`I'm listening to ${user.username}`)
+			const audioStream = receiver.createStream(user, { mode: 'pcm' })
+			const requestConfig = {
+			encoding: 'LINEAR16',
+			sampleRateHertz: 48000,
+			languageCode: 'en-US'
+			}
 
-      const convertTo1ChannelStream = new ConvertTo1ChannelStream()
-      audioStream.pipe(convertTo1ChannelStream).pipe(recognizeStream)
-      audioStream.on('end', async () => {
-        console.log('audioStream end')
-      })
-    })
-  }
+			// console.log("\n\n\n 4 \n\n\n")
+
+
+			const request = {
+			config: requestConfig
+			}
+			const recognizeStream = googleSpeechClient
+			.streamingRecognize(request)
+			.on('error', console.error)
+			.on('data', response => {
+				// console.log("\n\n\n reeeeeee \n\n\n")
+
+				const transcription = response.results
+				.map(result => result.alternatives[0].transcript)
+				.join('\n')
+				.toLowerCase()
+				console.log(`Transcription: ${transcription}`)
+				console.log(transChannel.id)
+
+			
+				transChannel.send(`${user.username}: ${transcription}`)
+				// dmList.send(`${user.username}: ${transcription}`)
+
+
+			})
+
+			const convertTo1ChannelStream = new ConvertTo1ChannelStream()
+			audioStream.pipe(convertTo1ChannelStream).pipe(recognizeStream)
+			audioStream.on('end', async () => {
+			console.log('audioStream end')
+			})
+		})
+		}
   
-  else if(msg.content === 'transcribeHere'){
-    const memberTextChannel = msg.channel
-    if (memberTextChannel == null) {
-      msg.reply("I can only transcribe your speech into a text channel!")
-      return
-	}
-	transChannel = memberTextChannel
-	console.log(transChannel)
+  	else if(msg.content === 'transcribeHere'){
+    	const memberTextChannel = msg.channel
+    	if (memberTextChannel == null) {
+     		msg.reply("I can only transcribe your speech into a text channel!")
+      		return
+		}
+		transChannel = memberTextChannel
+	// console.log(transChannel)
 
-  }
+  	}
 
-  else if(msg.content === 'dmMe'){
+  	else if(msg.content === 'dmMe'){
     const memberDM = msg.member
     dmList = memberDM
-  }
+  	}
 })
-
-
-
-
-CONFIRMED_TEXT_CHANNEL = "Confirmed text channel"
-CONFIRMED_NICK_NAME = "Confirmed nick name"
-CONFIRMED_MEMBER_NAME = "Confirmed member name"
-
-ID_ERROR_1 = "It is not in proper ID format"
-ID_ERROR_2 = "It is not a known channel"
-ID_ERROR_3 = "It is not a text channel"
-ID_ERROR_4 = "Not a member of this server"
-ID_ERROR_ROLE = "Is a role on the server and not a member or text channel, or something else because I don't want to check"
-
-/**
- * Function's purpose is to identify whether or not the provided mention ID is valid and of this server.
- * This is done by checking a series of substrings within the provided ID, and then comparing the 
- * full string of numbers to the guild's member and channel lists. For visual purposes
- * 
- * User -  		<@___>				good, if member of guild
- * Nickname -  	<@!__>				good, if member of guild
- * Bot - 		<@___> or <@!___>	bad, we don't want to be able to send things to bots
- * Role -  		<@&__>				bad, all the time
- * Channel -  	<#___>				good, if text channel
- * 
- * @param {*} fullId - the mention's string form
- * @param {*} guildAccess - The message or something giving the function access to the guilds channels 
- * and members lists
- */
-function identifyMention(fullId, guildAccess){
-
-	if( fullId.length >= 4 ){
-		if( fullId.substring(0,1) == ('<') && fullId.substring(fullId.length - 1, fullId.length) == ('>') ){
-			if( fullId.substring(1,2) == ('#') ){
-				channelID = fullId.substring(2, fullId.length-1)
-				if(guildAccess.guild.channels.get(channelID) != null){
-					if(guildAccess.guild.channels.get(channelID).type == "text"){
-						return CONFIRMED_TEXT_CHANNEL
-					}else{
-						// It is not a text channel
-						return ID_ERROR_3
-					}
-				}else{
-					// It is not a known channel
-					return ID_ERROR_2
-				}
-			}else if( fullId.substring(1,2) == ('@') ){
-				if( fullId.substring(2,3) == ('!') ){
-					userID = fullId.substring(3, fullId.length-1)
-					if( guildAccess.member.fetch(userID) != null ){
-						// console.log("Is a bot: " + userID.)
-						return CONFIRMED_NICK_NAME
-					}else{
-						// Not a member of this server
-						return ID_ERROR_4
-					}
-				}else if( fullId.substring(2,3) == ('&') ){
-					// Is a role on the server and not a member or text channel, or something else because I don't want to check
-					return ID_ERROR_ROLE
-				}else{
-					userID = fullId.substring(2, fullId.length-1)
-					if( guildAccess.member.fetch(userID) != null ){
-						return CONFIRMED_MEMBER_NAME
-					}else{
-						// Not a member of this server
-						return ID_ERROR_4
-					}
-				}
-			}else{
-				// It is not in proper ID format
-				return ID_ERROR_1
-			}
-		}else{
-			// It is not in proper ID format
-			return ID_ERROR_1
-		}
-	}else{
-		// It is not in proper ID format
-		return ID_ERROR_1
-	}
-
-}
-
-/**
- * A helper function for parsing IDs quickly. Should only be used if fullId has been confirmed
- * by the identifyMention function.
- * 
- * @param {*} fullId 	The full ID provided by the mention. Is known to be a text channel, or name of a user/bot.
- */
-function parseID(fullId){
-
-	// Known text channel
-	if( fullId.substring(1,2) == ('#') ){
-		channelID = fullId.substring(2, fullId.length-1)
-		return channelID
-	}else if( fullId.substring(1,2) == ('@') ){
-		if( fullId.substring(2,3) == ('!') ){
-			userID = fullId.substring(3, fullId.length-1)
-			return userID
-		}else{
-			userID = fullId.substring(2, fullId.length-1)
-			return userID
-		}
-	}
-
-}
