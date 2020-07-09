@@ -5,7 +5,7 @@
 // also going to need this "npm install --save collections"
 
 var ConvertTo1ChannelStream = require("./stream_util.js");
-console.log(ConvertTo1ChannelStream)
+var {identifyMention, parseID} = require("./mention_util.js");
 
 const dotenv = require('dotenv');
 dotenv.config();
@@ -48,7 +48,6 @@ const helpEmbed = new Discord.MessageEmbed()
 	.addField('&listen', 'Calls Andre to the voice channel you are currently in.', false)
 
 
-	
 
 
 discordClient.on('message', async msg => {
@@ -66,325 +65,234 @@ discordClient.on('message', async msg => {
 
 		console.log(args[1])
 
-		// number of arguments provided is only 2
 		if(args.length == 2){
-			// checks to make sure the ID is greater than four. might not be necessary
-			if(args[1].length >= 4){
-				// makes sure the id starts with "<" and ends with ">"
-				if(args[1].substring(0,1) == "<" && args[1].substring(args[1].length-1, args[1].length) == ">"){
-					// checks to see if it is a channel id
-					if(args[1].substring(1,2) == "#"){
-						channelID = args[1].substring(2, args[1].length-1)
-						// looks throught the channel list to see if the channel exists...
-						if(discordClient.channels.get(channelID) != null){
-							// ...and that it is a text channel
-							if(discordClient.channels.get(channelID).type == "text"){
-								// checks to see if the id is already in the list
-								if(!transChannelList.has(channelID)){
-									// Here is where we add to the transChannelList
-									msg.channel.send( args[1] + " is now on the list of channels receiving the transcription.")
-									transChannelList.unshift(channelID)
-									transChannelListDisplay.unshift(args[1])
-									console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
-
-								}else{
-									msg.reply(ADD_ERROR_3)
-								}
-							}else{
-								msg.reply(ADD_ERROR_2)
-							}
-						}else{
-							msg.reply(ADD_ERROR_1)
-						}
-					// checks to see if the id is a user mention (and not a category or something else)
-					// && args[1].substring(2,3) == "!"
-					}else if(args[1].substring(1,2) == "@"){
-						userID = args[1].substring(3, args[1].length-1)
-						// checks to see if the user exists
-						if(discordClient.users.fetch(userID) != null){
-							// checks to see if the list already contains the user and that the user being added to the list is the user calling the function
-							if(!transDMList.has(userID) && msg.member.id == userID){
-								// Here is where we add to the transDMList
-								msg.channel.send( args[1] + " is now on the list of users receiving the transcription via DMs.")
-								transDMList.unshift(userID)
-								transDMListDisplay.unshift(args[1])
-								console.log("\nDM List\n" + transDMList.toArray() + "\n\n")
-
-							}else{
-								msg.reply(ADD_ERROR_3)
-							}
-						}else{
-							msg.reply(ADD_ERROR_1)
+			switch(identifyMention(args[1], msg)){
+				case 'Confirmed text channel':
+					channelID = parseID(args[1])
+					if(!transChannelList.has(channelID)){
+						// Here is where we add to the transChannelList
+						msg.channel.send( args[1] + " is now on the list of channels receiving the transcription.")
+						transChannelList.unshift(channelID)
+						transChannelListDisplay.unshift(args[1])
+						console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
+					}else{
+						// Already on transChannelList
+						msg.reply(ADD_ERROR_3)
+					}
+					break;
+				case 'Confirmed nick name':
+				case 'Confirmed member name':
+					userID = parseID(args[1])
+					if(msg.member.id == userID){
+						if(!transDMList.has(userID)){
+							msg.channel.send( args[1] + " is now on the list of users receiving the transcription via DMs.")
+							transDMList.unshift(userID)
+							transDMListDisplay.unshift(args[1])
+							console.log("\nDM List\n" + transDMList.toArray() + "\n\n")
 						}
 					}else{
-						msg.reply(ADD_ERROR_1)
+						// User mentioned is not the same as the user mentioning
+						msg.reply(ADD_ERROR_4)
 					}
-				}else{
-					msg.reply(ADD_ERROR_1)
-				}
-			}else{
-				msg.reply(ADD_ERROR_1)
+					break;
+				default:
+					msg.reply(identifyMention(args[1], msg))
 			}
-		}else{
-			msg.reply(ADD_ERROR_1)
 		}
-
 		break;
 
     case 'remove':
+		console.log(args[1])
 
-		// number of arguments provided is only 2
 		if(args.length == 2){
-			// checks to make sure the ID is greater than four. might not be necessary
-			if(args[1].length >= 4){
-				// makes sure the id starts with "<" and ends with ">"
-				if(args[1].substring(0,1) == "<" && args[1].substring(args[1].length-1, args[1].length) == ">"){
-					// checks to see if it is a channel id
-					if(args[1].substring(1,2) == "#"){
-						channelID = args[1].substring(2, args[1].length-1)
-						// looks throught the channel list to see if the channel exists...
-						if(discordClient.channels.get(channelID) != null){
-							// ...and that it is a text channel
-							if(discordClient.channels.get(channelID).type == "text"){
-								// checks to see if the id is already in the list, it should be in order to remove
-								if(transChannelList.has(channelID)){
-									// Here is where we remove from the transChannelList
-									msg.channel.send( args[1] + " has been removed from the list of channels receiving the transcription.")
-									transChannelList.delete(channelID)
-									transChannelListDisplay.delete(args[1])
-									console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
-
-								}else{
-									msg.reply(ADD_ERROR_3)
-								}
-							}else{
-								msg.reply(ADD_ERROR_2)
-							}
-						}else{
-							msg.reply(ADD_ERROR_1)
-						}
-					// checks to see if the id is a user mention (and not a category or something else)
-					}else if(args[1].substring(1,2) == "@" && args[1].substring(2,3) == "!"){
-						userID = args[1].substring(3, args[1].length-1)
-						// checks to see if the user exists
-						if(discordClient.users.fetch(userID) != null){
-							// checks to see if the list already contains the user, it should be in order to remove, and that the user being added to the list is the user calling the function
-							if(transDMList.has(userID) && msg.member.id == userID){
-								// Here is where we add to the transDMList
-								msg.channel.send( args[1] + " has been removed from the list of users receiving the transcription via DMs.")
-								transDMList.delete(userID)
-								transDMListDisplay.delete(args[1])
-								console.log("\nDM List\n" + transDMList.toArray() + "\n\n")
-
-							}else{
-								msg.reply(ADD_ERROR_3)
-							}
-						}else{
-							msg.reply(ADD_ERROR_1)
+			switch(identifyMention(args[1], msg)){
+				case 'Confirmed text channel':
+					channelID = parseID(args[1])
+					if(transChannelList.has(channelID)){
+						msg.channel.send( args[1] + " has been removed from the list of channels receiving the transcription.")
+						transChannelList.delete(channelID)
+						transChannelListDisplay.delete(args[1])
+						console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
+					}else{
+						// Not on transChannelList
+						msg.reply(REMOVE_ERROR_3)
+					}
+					break;
+				case 'Confirmed nick name':
+				case 'Confirmed member name':
+					userID = parseID(args[1])
+					if(msg.member.id == userID){
+						if(transDMList.has(userID)){
+							msg.channel.send( args[1] + " has been removed from the list of users receiving the transcription via DMs.")
+							transDMList.delete(userID)
+							transDMListDisplay.delete(args[1])
+							console.log("\nDM List\n" + transDMList.toArray() + "\n\n")
 						}
 					}else{
-						msg.reply(ADD_ERROR_1)
+						// User mentioned is not the same as the user mentioning
+						msg.reply(REMOVE_ERROR_4)
 					}
-				}else{
-					msg.reply(ADD_ERROR_1)
-				}
-			}else{
-				msg.reply(ADD_ERROR_1)
+					break;
+				default:
+					msg.reply(identifyMention(args[1], msg))
 			}
-		}else{
-			msg.reply(ADD_ERROR_1)
 		}
-		
 		break;
 
     case 'display':
 
-		const displayEmbed = new Discord.MessageEmbed()
-			.setColor('#92DCE5')
-			.setTitle('Andre is transcribing for...')
-			.addField('Channels', transChannelListDisplay.toArray() , false)
-			.addField('Users via DM', transDMListDisplay.toArray() , false)
+		if(transChannelListDisplay.toArray() == '' && transDMList.toArray() == ''){
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', 'No channels have been added' , false)
+				.addField('Users via DM', 'No users have been added' , false)
 
-		msg.channel.send(displayEmbed)
+			msg.channel.send(displayEmbed)
+		}else if(transChannelListDisplay.toArray() == ''){
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', 'No channels have been added' , false)
+				.addField('Users via DM', transDMListDisplay.toArray() , false)
+
+			msg.channel.send(displayEmbed)
+		}else if(transDMList.toArray() == ''){
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', transChannelListDisplay.toArray() , false)
+				.addField('Users via DM', 'No users have been added' , false)
+
+			msg.channel.send(displayEmbed)
+		}else{
+			const displayEmbed = new Discord.MessageEmbed()
+				.setColor('#92DCE5')
+				.setTitle('Andre is transcribing for...')
+				.addField('Channels', transChannelListDisplay.toArray() , false)
+				.addField('Users via DM', transDMListDisplay.toArray() , false)
+
+			msg.channel.send(displayEmbed)
+		}
 
 
 		break;
 		
 	case 'listen':
-		msg.reply("This command has not been set up yet! Take it up with that stupid Aaron guy!")
+		// msg.reply("This command has not been set up yet! Take it up with that stupid Aaron guy!")
+
+		const memberVoiceChannel = msg.member.voice.channel
+		
+		if (!msg.member.voice.channel.joinable) {
+			console.log(msg.member.voice.channel)
+			msg.reply("<#" + memberVoiceChannel +">")
+			console.log("<#" + memberVoiceChannel +">")
+			console.log(memberVoiceChannel +"\n\n")
+			console.log("yo andre can't join that")
+			return
+		}
+		const connection = await memberVoiceChannel.join()
+
+
 		break;
 		
+	// to be removed, used for testing
 	case 'identify':
 		console.log( args[1] )
 		console.log( identifyMention(args[1], msg) )
 		break;
+
+	// to be removed, used for testing
+	case 'parse':
+		console.log(args[1])
+		console.log(parseID(args[1]))
+		break;
+	
+	// to be removed, used for testing
+	case 'test':
+		console.log(msg.member)
+		break;
 	}
 
 
-  if (msg.content === 'inHere') {
-    const memberVoiceChannel = msg.member.voice.channel
-    if (memberVoiceChannel == null) {
-      msg.reply("you need to be in a voice channel for me to help you!")
-      return
-    }
-    if(transChannel == null){
-      msg.reply("you need to type 'transcribeHere' in a text channel before I can start transcribing your message.")
-      return
-    }
+	if (msg.content === 'inHere') {
+		const memberVoiceChannel = msg.member.voice.channel
 
-    msg.reply('I\'m omw')
+		if (memberVoiceChannel == null) {
+			msg.reply("you need to be in a voice channel for me to help you!")
+			return
+		}
 
-    // console.log("\n\n\n 2 \n\n\n")
+		msg.reply('I\'m omw')
 
+		const connection = await memberVoiceChannel.join()
+		const receiver = connection.receiver
 
-    const connection = await memberVoiceChannel.join()
-    const receiver = connection.receiver
+		connection.on('speaking', (user, speaking) => {
 
-    connection.on('speaking', (user, speaking) => {
-      if (!speaking) {
-        return
-      }
+			if (!speaking) {
+			return
+			}
 
-      // console.log("\n\n\n 3 \n\n\n")
-
-
-      console.log(`I'm listening to ${user.username}`)
-      const audioStream = receiver.createStream(user, { mode: 'pcm' })
-      const requestConfig = {
-        encoding: 'LINEAR16',
-        sampleRateHertz: 48000,
-        languageCode: 'en-US'
-      }
-
-      // console.log("\n\n\n 4 \n\n\n")
+			console.log(`I'm listening to ${user.username}`)
+			const audioStream = receiver.createStream(user, { mode: 'pcm' })
+			const requestConfig = {
+			encoding: 'LINEAR16',
+			sampleRateHertz: 48000,
+			languageCode: 'en-US'
+			}
 
 
-      const request = {
-        config: requestConfig
-      }
-      const recognizeStream = googleSpeechClient
-        .streamingRecognize(request)
-        .on('error', console.error)
-        .on('data', response => {
-          // console.log("\n\n\n reeeeeee \n\n\n")
 
-          const transcription = response.results
-            .map(result => result.alternatives[0].transcript)
-            .join('\n')
-            .toLowerCase()
-          console.log(`Transcription: ${transcription}`)
-          console.log(transChannel.id)
+			const request = {
+			config: requestConfig
+			}
+			const recognizeStream = googleSpeechClient
+			.streamingRecognize(request)
+			.on('error', console.error)
+			.on('data', response => {
 
-		
-          transChannel.send(`${user.username}: ${transcription}`)
-          dmList.send(`${user.username}: ${transcription}`)
+				const transcription = response.results
+				.map(result => result.alternatives[0].transcript)
+				.join('\n')
+				.toLowerCase()
+				console.log(`Transcription: ${transcription}`)
+				
+
+				for(index=0; index<transChannelList.toArray().length; index++){
+					chan = msg.guild.channels.get(transChannelList.toArray()[index])
+					chan.send(`${user.username}: ${transcription}`)
+				}
+
+				for(i=0; i<transDMList.toArray().length; i++){
+					mem = msg.guild.members.fetch(transDMList.toArray()[i])
+					mem.then(function(member){member.send(`${user.username}: ${transcription}`)})
+				}
 
 
-        })
+			})
 
-      const convertTo1ChannelStream = new ConvertTo1ChannelStream()
-      audioStream.pipe(convertTo1ChannelStream).pipe(recognizeStream)
-      audioStream.on('end', async () => {
-        console.log('audioStream end')
-      })
-    })
-  }
+			const convertTo1ChannelStream = new ConvertTo1ChannelStream()
+			audioStream.pipe(convertTo1ChannelStream).pipe(recognizeStream)
+			audioStream.on('end', async () => {
+			console.log('audioStream end')
+			})
+		})
+		}
   
-  else if(msg.content === 'transcribeHere'){
-    const memberTextChannel = msg.channel
-    if (memberTextChannel == null) {
-      msg.reply("I can only transcribe your speech into a text channel!")
-      return
-	}
-	transChannel = memberTextChannel
-	console.log(transChannel)
+  	else if(msg.content === 'transcribeHere'){
+    	const memberTextChannel = msg.channel
+    	if (memberTextChannel == null) {
+     		msg.reply("I can only transcribe your speech into a text channel!")
+      		return
+		}
+		transChannel = memberTextChannel
+	// console.log(transChannel)
 
-  }
+  	}
 
-  else if(msg.content === 'dmMe'){
+  	else if(msg.content === 'dmMe'){
     const memberDM = msg.member
     dmList = memberDM
-  }
+  	}
 })
-
-
-
-
-CONFIRMED_TEXT_CHANNEL = "Confirmed text channel"
-CONFIRMED_NICK_NAME = "Confirmed nick name"
-CONFIRMED_MEMBER_NAME = "Confirmed member name"
-
-ID_ERROR_1 = "It is not in proper ID format"
-ID_ERROR_2 = "It is not a known channel"
-ID_ERROR_3 = "It is not a text channel"
-ID_ERROR_4 = "Not a member of this server"
-ID_ERROR_ROLE = "Is a role on the server and not a member or text channel, or something else because I don't want to check"
-
-/**
- * Function's purpose is to identify whether or not the provided mention ID is valid and of this server.
- * This is done by checking a series of substrings within the provided ID, and then comparing the 
- * full string of numbers to the guild's member and channel lists. For visual purposes
- * 
- * User -  		<@___>				good, if member of guild
- * Nickname -  	<@!__>				good, if member of guild
- * Bot - 		<@___> or <@!___>	bad, we don't want to be able to send things to bots
- * Role -  		<@&__>				bad, all the time
- * Channel -  	<#___>				good, if text channel
- * 
- * @param {*} fullId - the mention's string form
- * @param {*} guildAccess - The message or something giving the function access to the guilds channels 
- * and members lists
- */
-function identifyMention(fullId, guildAccess){
-
-	if( fullId.length >= 4 ){
-		if( fullId.substring(0,1) == ('<') && fullId.substring(fullId.length - 1, fullId.length) == ('>') ){
-			if( fullId.substring(1,2) == ('#') ){
-				channelID = fullId.substring(2, fullId.length-1)
-				if(guildAccess.channels.get(channelID) != null){
-					if(guildAccess.channels.get(channelID).type == "text"){
-						return CONFIRMED_TEXT_CHANNEL
-					}else{
-						// It is not a text channel
-						return ID_ERROR_3
-					}
-				}else{
-					// It is not a known channel
-					return ID_ERROR_2
-				}
-			}else if( fullId.substring(1,2) == ('@') ){
-				if( fullId.substring(2,3) == ('!') ){
-					userID = fullId.substring(3, fullId.length-1)
-					if( guildAccess.member.fetch(userID) != null ){
-						// console.log("Is a bot: " + userID.)
-						return CONFIRMED_NICK_NAME
-					}else{
-						// Not a member of this server
-						return ID_ERROR_4
-					}
-				}else if( fullId.substring(2,3) == ('&') ){
-					// Is a role on the server and not a member or text channel, or something else because I don't want to check
-					return ID_ERROR_ROLE
-				}else{
-					userID = fullId.substring(2, fullId.length-1)
-					if( guildAccess.member.fetch(userID) != null ){
-						return CONFIRMED_MEMBER_NAME
-					}else{
-						// Not a member of this server
-						return ID_ERROR_4
-					}
-				}
-			}else{
-				// It is not in proper ID format
-				return ID_ERROR_1
-			}
-		}else{
-			// It is not in proper ID format
-			return ID_ERROR_1
-		}
-	}else{
-		// It is not in proper ID format
-		return ID_ERROR_1
-	}
-
-}
