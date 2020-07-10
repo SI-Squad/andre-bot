@@ -3,6 +3,7 @@
 // npm install discord.js
 // npm i @discordjs/opus
 // also going to need this "npm install --save collections"
+// Bot needs top three permissions of second section for the voice channel (speak, connect, and the other thing)
 
 var ConvertTo1ChannelStream = require("./stream_util.js");
 var {identifyMention, parseID} = require("./mention_util.js");
@@ -27,17 +28,11 @@ var transDMList = List();
 var transChannelListDisplay = List()
 var transDMListDisplay = List()
 
-// to be removed
-var transChannel
-var dmList
-
-// console.log("\n\n\n 1 \n\n\n")
 
 const PREFIX = "&"
-const ADD_ERROR_1 = " the correct notation for &add is as follows: \n&add < @User | #TextChannel >\nMake sure that the name of the user or channel is highlighted."
-const ADD_ERROR_2 = " the channel you are trying to &add is not a text channel."
-const ADD_ERROR_3 = " you can only add yourself and, permission granted, channels to the transcription lists. This error also occurs when you are already on the list receiving the transcription."
-
+const ADD_ERROR_1 = " the channel you are trying to add is already on the list of channels receiving the transcription."
+const ADD_OR_REMOVE_ERROR_2 = " you can only add/remove yourself to the list of users receiving the transcription."
+const REMOVE_ERROR_1 = " the channel you are trying to remove from the list of channels receiving the transcription, is already not on the list."
 const helpEmbed = new Discord.MessageEmbed()
 	.setColor('#92DCE5')
 	.setTitle('Andre Commands')
@@ -77,7 +72,7 @@ discordClient.on('message', async msg => {
 						console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
 					}else{
 						// Already on transChannelList
-						msg.reply(ADD_ERROR_3)
+						msg.reply(ADD_ERROR_1)
 					}
 					break;
 				case 'Confirmed nick name':
@@ -92,7 +87,7 @@ discordClient.on('message', async msg => {
 						}
 					}else{
 						// User mentioned is not the same as the user mentioning
-						msg.reply(ADD_ERROR_4)
+						msg.reply(ADD_OR_REMOVE_ERROR_2)
 					}
 					break;
 				default:
@@ -115,7 +110,7 @@ discordClient.on('message', async msg => {
 						console.log("\nChannel List\n" + transChannelList.toArray() + "\n")
 					}else{
 						// Not on transChannelList
-						msg.reply(REMOVE_ERROR_3)
+						msg.reply(REMOVE_ERROR_1)
 					}
 					break;
 				case 'Confirmed nick name':
@@ -130,7 +125,7 @@ discordClient.on('message', async msg => {
 						}
 					}else{
 						// User mentioned is not the same as the user mentioning
-						msg.reply(REMOVE_ERROR_4)
+						msg.reply(ADD_OR_REMOVE_ERROR_2)
 					}
 					break;
 				default:
@@ -179,43 +174,7 @@ discordClient.on('message', async msg => {
 		break;
 		
 	case 'listen':
-		// msg.reply("This command has not been set up yet! Take it up with that stupid Aaron guy!")
-
-		const memberVoiceChannel = msg.member.voice.channel
 		
-		if (!msg.member.voice.channel.joinable) {
-			console.log(msg.member.voice.channel)
-			msg.reply("<#" + memberVoiceChannel +">")
-			console.log("<#" + memberVoiceChannel +">")
-			console.log(memberVoiceChannel +"\n\n")
-			console.log("yo andre can't join that")
-			return
-		}
-		const connection = await memberVoiceChannel.join()
-
-
-		break;
-		
-	// to be removed, used for testing
-	case 'identify':
-		console.log( args[1] )
-		console.log( identifyMention(args[1], msg) )
-		break;
-
-	// to be removed, used for testing
-	case 'parse':
-		console.log(args[1])
-		console.log(parseID(args[1]))
-		break;
-	
-	// to be removed, used for testing
-	case 'test':
-		console.log(msg.member)
-		break;
-	}
-
-
-	if (msg.content === 'inHere') {
 		const memberVoiceChannel = msg.member.voice.channel
 
 		if (memberVoiceChannel == null) {
@@ -241,8 +200,6 @@ discordClient.on('message', async msg => {
 			sampleRateHertz: 48000,
 			languageCode: 'en-US'
 			}
-
-
 
 			const request = {
 			config: requestConfig
@@ -278,21 +235,12 @@ discordClient.on('message', async msg => {
 			console.log('audioStream end')
 			})
 		})
-		}
+
+		break;
+	}
+
+
+	
   
-  	else if(msg.content === 'transcribeHere'){
-    	const memberTextChannel = msg.channel
-    	if (memberTextChannel == null) {
-     		msg.reply("I can only transcribe your speech into a text channel!")
-      		return
-		}
-		transChannel = memberTextChannel
-	// console.log(transChannel)
-
-  	}
-
-  	else if(msg.content === 'dmMe'){
-    const memberDM = msg.member
-    dmList = memberDM
-  	}
+  	
 })
