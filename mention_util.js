@@ -2,11 +2,11 @@ CONFIRMED_TEXT_CHANNEL = "Confirmed text channel"
 CONFIRMED_NICK_NAME = "Confirmed nick name"
 CONFIRMED_MEMBER_NAME = "Confirmed member name"
 
-ID_ERROR_1 = "It is not in proper ID format"
-ID_ERROR_2 = "It is not a known channel"
-ID_ERROR_3 = "It is not a text channel"
-ID_ERROR_4 = "Not a member of this server"
-ID_ERROR_ROLE = "Is a role on the server and not a member or text channel, or something else because I don't want to check"
+ID_ERROR_1 = " It is not in proper ID format"
+ID_ERROR_2 = " It is not a known channel"
+ID_ERROR_3 = " It is not a text channel"
+ID_ERROR_4 = " Not a member of this server"
+ID_ERROR_ROLE = " Is a role on the server and not a member or text channel, or something else because I don't want to check"
 
 /**
  * Function's purpose is to identify whether or not the provided mention ID is valid and of this server.
